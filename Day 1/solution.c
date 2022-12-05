@@ -45,6 +45,7 @@ int main(void) {
     printf("Elf carrying the second largest number of calories: %d\n", second_biggest);
     printf("Elf carrying the third largest number of calories: %d\n", third_biggest);
     printf("Total sum of top three elves' calorie content: %d\n", biggest + second_biggest + third_biggest);
+    fclose(file);
     return 0;
 }
 

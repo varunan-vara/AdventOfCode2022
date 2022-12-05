@@ -21,6 +21,7 @@ int main (void) {
 
     printf("Gameplay Score: %d\n", iscore);
     printf("Predicted Score: %d\n", pscore);
+    fclose(file);
 }
 
 // Function that converts a file to a list of str's, each of which is a line
