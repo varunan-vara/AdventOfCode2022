@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdlib.h>
-#include <string.h>
 
 using namespace std;
 
@@ -10,7 +9,6 @@ class Stack {
         int size = 0;
     public:
         Stack();
-        Stack(char containerlist[], int containersize);
         void setVar(char containerlist[], int containersize);
         int getSize();
         void addContainers( char containerList[], int containerCount );
@@ -44,6 +42,7 @@ int main() {
 
     for (i = 0; i < number_of_stacks; i ++) {
         stack_list[i].setVar(stack_contents[i], stack_content_sizes[i]);
+        part_two_list[i].setVar(stack_contents[i], stack_content_sizes[i]);
     }
 
     int num, from, to;
@@ -52,29 +51,26 @@ int main() {
         fscanf(file_name, "move %d from %d to %d", &num, &from, &to);
         fgetc(file_name);
         stack_list[from - 1].moveContainers(&stack_list[to - 1], num);
-    }
-
-    cout << "Model 5000" << endl;
-    for (i = 0; i < number_of_stacks; i ++) {
-        cout << "Top Container for Stack " << i + 1 << ": " << stack_list[i].topContainer() << endl;
-    }
-
-    rewind(file_name);
-
-    for (i = 0; i < number_of_stacks; i ++) {
-        part_two_list[i].setVar(stack_contents[i], stack_content_sizes[i]);
-    }
-    for (i = 0; i < 501; i ++) {
-        fscanf(file_name, "move %d from %d to %d", &num, &from, &to);
-        fgetc(file_name);
         part_two_list[from - 1].moveContainersTwo(&part_two_list[to - 1], num);
     }
 
+
+
+    // Pure formatting  
+    cout << "Model 5000" << endl;
+    for (i = 0; i < number_of_stacks; i ++) {cout << "Top Container for Stack " << i + 1 << ": " << stack_list[i].topContainer() << endl;}
+
+    cout << endl << "Total: " << endl;
+    for (i = 0; i < number_of_stacks; i ++) {cout << stack_list[i].topContainer();}
+    cout << endl << endl;
+
     cout << "Model 5001" << endl;
     
-    for (i = 0; i < number_of_stacks; i ++) {
-        cout << "Top Container for Stack " << i + 1 << ": " << part_two_list[i].topContainer() << endl;
-    }
+    for (i = 0; i < number_of_stacks; i ++) {cout << "Top Container for Stack " << i + 1 << ": " << part_two_list[i].topContainer() << endl;}
+
+    cout << endl << "Total: " << endl;
+    for (i = 0; i < number_of_stacks; i ++) {cout << part_two_list[i].topContainer();}
+    cout << endl << endl;
 }
 
 
@@ -92,13 +88,6 @@ FILE *get_file (char file_name[])  {
 
 Stack::Stack() {
     return;
-}
-
-Stack::Stack(char containerlist[], int containersize) {
-    for (int i = 0; i < containersize; i++ ) {
-        containers[i] = containerlist[i];
-    }
-    size = containersize;
 }
 
 int Stack::getSize() {return size;}
