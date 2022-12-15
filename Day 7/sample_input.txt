@@ -1,0 +1,6 @@
+$ ls
+dir bqm
+$ cd bqm
+209719 rtv.cjj
+192236 vmtnnfv.mdq
+$ cd ..
