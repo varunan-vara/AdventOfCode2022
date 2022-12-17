@@ -31,8 +31,8 @@ int main (void) {
 void iterateCycle(int *counter, int *x, int *outputlist) {
     if (*counter %40 == 0) {printf("\n");}
     if (abs((*counter %40) - *x) <= 1) {
-        printf("#");
-    } else {printf(".");}
+        printf("# ");
+    } else {printf(". ");}
     *counter = *counter + 1;
     outputlist[*counter] = *x;
 
