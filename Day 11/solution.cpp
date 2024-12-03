@@ -1,122 +1,157 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <iostream>
 #include <string>
+#include <vector>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+
 using namespace std;
+
+// Define classes
+class Item {
+    public:
+        int worryAmount;
+        Item (int worryInt) {worryAmount = worryInt;}
+        void add(int num) {worryAmount = worryAmount + num;}
+        void multiply(int num) {worryAmount = worryAmount * num;}
+        void divide(int num) {worryAmount = worryAmount / num;}
+};
+
+class Monkey {
+    private:
+        int inspections = 0;
+        vector<Item> itemList;
+        bool isOperationMultiply; // True means multiply, false means add
+        bool isOperationValueOld = false; // True means add or multiply by old, false means use value below
+        int operationValue, divisibleValue;
+        Monkey *trueMonkey;
+        Monkey *falseMonkey;
+
+    public:
+        Monkey () {}
+        // -1 at operationValue means operation is done using old
+        Monkey(vector<Item> startingItemList, bool intIsOperationMultiply, int intOperationValue, int checkValue, Monkey *pTrueMonkey, Monkey *pFalseMonkey) {
+            itemList = startingItemList;
+            isOperationMultiply = intIsOperationMultiply;
+            if (intOperationValue == -1) 
+                isOperationValueOld = true;
+            else 
+                operationValue = intOperationValue;
+            divisibleValue = checkValue;
+            trueMonkey = pTrueMonkey, falseMonkey = pFalseMonkey;
+        }
+
+        void inheritItem(Item item) {
+            itemList.push_back(item);
+        }
+
+        void inspect() {
+            while (itemList.size() > 0) {
+                Item sItem = itemList[itemList.size() - 1];
+
+                // Increment Inspections
+                inspections++;
+
+                // Adjust Worry Value
+                int temp;
+                if (isOperationValueOld) 
+                    temp = sItem.worryAmount;
+                else
+                    temp = operationValue;
+                
+                if (isOperationMultiply)
+                    sItem.multiply(temp);
+                else
+                    sItem.add(temp);
+
+                // Get Bored
+                sItem.divide(3);
+
+                // Check divisible value
+                if(sItem.worryAmount % divisibleValue != 0) 
+                    trueMonkey->inheritItem(sItem);
+                else
+                    falseMonkey->inheritItem(sItem);
+                
+                itemList.pop_back();
+            }
+            cout << "Monkey has inspected" << endl;
+        }
+
+        int getInspectionNumber () {return inspections;}
+};
 
 // Define Functions
 FILE *get_file (char file_name[]);
 
-// Items stolen from backpack
-class Item {
-    private:
-        int worryLevel = 0;
-        Item *next;
-    public:
-        Item() {
-            worryLevel = 0;
-            next = NULL;
-        }
-        Item (int worry) {
-            worryLevel = worry;
-            next = NULL;
-        }
-        void multiply(int x) {worryLevel = worryLevel * (int) x;}
-        void add (int x) {worryLevel = worryLevel + x;}
-        void square () {worryLevel = worryLevel * worryLevel;}
-        void multiplyTwo () {worryLevel = worryLevel * 2;}
-        void bored() {worryLevel = worryLevel / 3;}
-        int getWorryLevel () {return worryLevel;}
-        Item *getNextItem () {return next;}
-        void setNextItem (Item *set) {next = set;}
-        void resetNext() {next = NULL;}
-};
+int main (void) {
 
-// Monkey class
-class Monkey {
-    private:
-        Item *headItem = NULL;
-        char operation;
-        int monkeyBusiness = 0;
-        int operationNum;
-        int testNum;
-        int trueMonkey;
-        int falseMonkey;
-    public:
-        Monkey(char operationChar, int operationNumInt, int testNumInt, int trueMonkeyInt, int falseMonkeyInt);
-        void catchItem(Item *y);
-        void throwItemToMonkey(Monkey *target);
-        void runOperation(Monkey** monkeyList);
-        int getMonkeyBusiness() {return monkeyBusiness;}
-};
+    FILE *file = get_file((char *) "./sampleinput.txt");
+    char output[100];
+    Monkey *monkey[10]; int monkeyIndex = 0;
 
-int main(void) {
-    FILE *file_name = get_file((char*)"./sampleinput.txt");
-    cout << "Assuming there are max of 8 monkeys." << endl << "assuming all the starting items are two digits large." << endl;
-    Monkey **monkeys = new Monkey*[8];
-    int n;
-    char output[50], operationStore;
-    int *numberStorage, operationNum, divCheckStore, trueMonkeyStore, falseMonkeyStore;
+    while (fgets(output, sizeof(output), file)) {
+        // First line is Monkey Number, we can skip this
+        // Second Line Contains starting Items
+        fgets(output, sizeof(output), file);
+        string outputString = output;
+        outputString.erase(0,17);
 
-    while (fscanf(file_name, "Monkey %d:", &n) != EOF) {
-        fgets(output, 50, file_name);
-        fgets(output, 50, file_name);
-        // Processing the starting items in numberStorage
-        int num = (strlen(output) - 17) / 4;
-        numberStorage = new int[num];
-        for (int i = 0; i < num; i ++) {
-            char item1 = output[18 + 4 * i], item2 = output[19 + 4 * i];
-            numberStorage[i] = (((int) item1) - 48) * 10 + ((int) item2) - 48;
+        vector<Item> itemList;
+        string temp;
+        for (stringstream sst(outputString); getline(sst, temp, ','); ) {
+            itemList.push_back(Item(stoi(temp)));
         }
 
+        // Third Line Contains operation
+        fgets(output, sizeof(output), file);
+        bool multiplication = (output[23] == '*');
+        string outputString2 = output; 
+        outputString2.erase(0,25);
+        int opNumber = (outputString2[0] == 'o') ? -1 : stoi(outputString2);
 
-        fgets(output, 50, file_name);
-        if (output[23] == '*') {
-            if (output[25] == 'o') {
-                operationStore = 's';
-            } else {
-                operationStore = 'm';
-                sscanf(output, "  Operation: new = old * %d", &operationNum);
-            }
-        } else if (output[23] == '+') {
-            if (output[25] == 'o') {
-                operationStore = 'd';
-            } else {
-                operationStore = 'a';
-                sscanf(output, "  Operation: new = old + %d", &operationNum);
-            }
-        }
+        // Fourth Line Contains boolean statement
+        fgets(output, sizeof(output), file);
+        string outputString3 = output;
+        outputString3.erase(0,20);
+        int divNum = stoi(outputString3);
 
+        // Fifth and Sixth Line Contain monkeys
+        fgets(output, sizeof(output), file);
+        string outputString4 = output;
+        outputString4.erase(0,28);
+        int trueMonkey = stoi(outputString4);
+        fgets(output, sizeof(output), file);
+        string outputString5 = output;
+        outputString5.erase(0,30);
+        int falseMonkey = stoi(outputString5);
 
-        fgets(output, 50, file_name);
-        sscanf(output, "  Test: divisible by %d", &divCheckStore);
+        // Skip last line
+        fgets(output, sizeof(output), file);
 
+        monkey[monkeyIndex] = new Monkey(
+            itemList, 
+            multiplication,
+            opNumber, 
+            divNum, 
+            monkey[trueMonkey], 
+            monkey[falseMonkey]
+        );
+    }
 
-        fgets(output, 50, file_name);
-        sscanf(output, "    If true: throw to monkey %d", &trueMonkeyStore);
-        fgets(output, 50, file_name);
-        sscanf(output, "    If false: throw to monkey %d", &falseMonkeyStore);
-
-        //Blank Line
-        fgets(output, 50, file_name);
-
-        monkeys[n] = new Monkey(operationStore, operationNum, divCheckStore, trueMonkeyStore, falseMonkeyStore);
-
-    } 
-
-    for (int x = 0; x < 20; x ++) {
-        for (int y = 0; y < n; y ++) {
-            monkeys[y]->runOperation(monkeys);
+    int rounds = 20;
+    for (int i = 0; i < rounds; i++) {
+        for (Monkey *m : monkey) {
+            m->inspect();
         }
     }
-    
-    for (int y = 0; y < n; y ++) {
-        cout << "Monkey " << y << ": " << monkeys[y]->getMonkeyBusiness() << endl;
-    }
+
+    vector<Monkey*> monkeyVector(monkey, monkey + sizeof(monkey) / sizeof(monkey[0]));
+    sort(monkeyVector.begin(), monkeyVector.end(), [](Monkey *m1, Monkey *m2) -> bool {return m1->getInspectionNumber() < m2->getInspectionNumber();});
+
+    cout << monkeyVector[0]->getInspectionNumber();
+
     return 0;
 }
-
 
 // Function that converts a file to a list of str's, each of which is a line
 FILE *get_file (char file_name[])  {
@@ -127,54 +162,4 @@ FILE *get_file (char file_name[])  {
         printf("Successfully read file\n");
     }
     return file;
-}
-
-Monkey::Monkey(char operationChar, int operationNumInt, int testNumInt, int trueMonkeyInt, int falseMonkeyInt) {
-    // operation char should be m or a (multiply or add) or s (square)
-    operation = operationChar;
-    operationNum = operationNumInt;
-    // number to test if divisble
-    testNum = testNumInt;
-    trueMonkey = trueMonkeyInt;
-    falseMonkey = falseMonkeyInt;
-    cout << "New Monkey!\nDetails:\n - Operation: " ;
-    cout << operationChar << ", ";
-    cout << operationNum << endl;
-    cout << " - Test: Divisble by " << testNum << endl;
-    cout << " - T: " << trueMonkey << " - F: " << falseMonkey << endl;
-}
-void Monkey::catchItem(Item *y) {
-    monkeyBusiness ++;
-    if (headItem == NULL) {
-        headItem = y;
-        return;
-    }
-    Item *ptr = headItem;
-    while (ptr->getNextItem() != NULL) {ptr = ptr->getNextItem();}
-    ptr->setNextItem(y);
-}
-void Monkey::throwItemToMonkey(Monkey *target) {
-    Item *ptr = headItem;
-    headItem = headItem->getNextItem();
-    target->catchItem(ptr);
-}
-void Monkey::runOperation(Monkey** monkeyList) {
-    cout << 1 << endl;
-    if (operation == 'm') {
-        cout << 1 << endl;
-        headItem->multiply(operationNum);
-        cout << 1 << endl;
-    } else if (operation == 'a') {
-        headItem->add(operationNum);
-    } else if (operation == 's') {
-        headItem->square();
-    } else if (operation == 'd') {
-        headItem->multiplyTwo();
-    }
-    headItem->bored();
-    if (headItem->getWorryLevel() % testNum != 0) {
-        throwItemToMonkey(*monkeyList + falseMonkey);
-    } else {
-        throwItemToMonkey(*monkeyList + trueMonkey);
-    }
 }
